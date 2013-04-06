@@ -36,7 +36,7 @@ class BookSorter
       word_set_string = ordered_word_set * ', '
       word_set_string = "[ #{ word_set_string } ]"
 
-      File.open('word_set.txt', 'w') { |file| file.write(word_set_string) }
+      File.open('resources/word_set.txt', 'w') { |file| file.write(word_set_string) }
     
     end
   end
