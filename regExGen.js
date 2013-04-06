@@ -42,7 +42,7 @@ var generateRegExFrom = function(word, depth)
             return 0;
         }
 
-        var ors = [generateRegExFrom(wordPiece), generateRegExFrom(wordPiece)];
+        var ors = [generateRegExFrom(wordPiece, depth+1), generateRegExFrom(wordPiece, depth+1)];
 
         fisherYates(ors);
 
