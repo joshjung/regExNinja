@@ -1,4 +1,3 @@
-words = ["regular", "expression", "ninja"];
 
 String.prototype.repeat = function( num )
 {
@@ -20,7 +19,7 @@ function fisherYates ( myArray ) {
     }
 }
 
-var generateRegExFrom = function(word, depth) 
+exports.generateRegExFrom = function(word, depth) 
 {
     this.result = {regEx: "", originalWord: word, curWord: word, curSlice: word};
     this.depth = depth;
@@ -42,14 +41,14 @@ var generateRegExFrom = function(word, depth)
             return 0;
         }
 
-        var ors = [generateRegExFrom(wordPiece), generateRegExFrom(wordPiece)];
+        var ors = [exports.generateRegExFrom(wordPiece), exports.generateRegExFrom(wordPiece)];
 
         fisherYates(ors);
 
         return "(" + ors[0] + "|" + ors[1] + ")";
     }
 
-    this.regExGenerators = [this.regEx_none, this.regEx_dot, regEx_orRecurse];
+    this.regExGenerators = [this.regEx_none, this.regEx_dot, this.regEx_orRecurse];
 
     this.genRegExSlice = function(result)
     {
@@ -60,7 +59,7 @@ var generateRegExFrom = function(word, depth)
         while (result.curRegExSlice == 0)
         {
             var typeOfSlice = Math.floor(Math.random() * this.regExGenerators.length);
-            result.curRegExSlice = regExGenerators[typeOfSlice](result.curSlice, this.depth);
+            result.curRegExSlice = this.regExGenerators[typeOfSlice](result.curSlice, this.depth);
         }
        
         result.regEx += (result.curRegExSlice);
@@ -73,12 +72,12 @@ var generateRegExFrom = function(word, depth)
         result.curSlice = result.curWord.substr(0, count);
         result.curWord = result.curWord.substr(count);       
 
-        genRegExSlice(result);
+        this.genRegExSlice(result);
 
         return result;
     }    
 
-    while (result.curWord.length)
+    while (this.result.curWord.length)
     {
         this.result = this.popRandomLettersFrom(this.result);
     }
@@ -86,13 +85,3 @@ var generateRegExFrom = function(word, depth)
     return this.result.regEx;
 }
 
-var i = Math.floor(Math.random() * words.length);
-var whichWord = words[i];
-
-console.log(whichWord);
-
-var regEx = generateRegExFrom(whichWord, 0);
-
-console.log("Original Word: " + whichWord);
-console.log("Regular Expression: " + regEx);
-console.log("Matches: " + whichWord.replace(new RegExp(regEx), "success"));
