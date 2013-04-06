@@ -1,62 +1,56 @@
 require ("fs");
+require ("./lib/framework.js");
 
-words = ["regular", "expression", "ninja"];
-
-String.prototype.repeat = function( num )
-{
-    return new Array( num + 1 ).join( this );
-}
-
-function fisherYates ( myArray ) {
-    var i = myArray.length, j, tempi, tempj;
-
-    if ( i == 0 ) return false;
-
-    while ( --i ) 
-    {
-        j = Math.floor( Math.random() * ( i + 1 ) );
-        tempi = myArray[i];
-        tempj = myArray[j];
-        myArray[i] = tempj;
-        myArray[j] = tempi;
-    }
-}
-
-exports.generateRegExFrom = function(word, depth) 
+/**
+ * Generates a regular expression for a given word.
+ *
+ * @param word The word to gen for.
+ * @param diff The difficulty (from 0 -  1)
+ * @param depth The current depth if a recursion has occurred.
+ */
+exports.generateRegExFrom = function(word, diff, depth) 
 {
     this.result = {regEx: "", originalWord: word, curWord: word, curSlice: word};
     this.depth = depth;
 
-    this.regEx_none = function(wordPiece, depth)
+    this.regEx_none = function(wordPiece, diff, depth)
     {
         return wordPiece;
     }
 
-    this.regEx_dot = function(wordPiece, depth)
+    this.regEx_dot = function(wordPiece, diff, depth)
     {
         return ".".repeat(wordPiece.length);
     }
 
-    this.regEx_plus = function(wordPiece, depth)
+    this.regEx_plus = function(wordPiece, diff, depth)
     {
         return "(" + wordPiece + ")+";
     }
 
-    this.regEx_orRecurse = function(wordPiece, depth)
+    this.regEx_orRecurse = function(wordPiece, diff, depth)
     {
         if (depth > 0)
         {
             return 0;
         }
-        
-        var ors = [exports.generateRegExFrom(wordPiece, depth+1), exports.generateRegExFrom(wordPiece, depth+1)];
+      
+        // From 2 - 5 depending on difficulty 
+        var count = Math.ceil(diff * 4) + 1;
+
+        var ors = [];
+       
+        for (var i = 0; i < count; i++)
+        {
+            ors.push(exports.generateRegExFrom(wordPiece, depth+1));
+        } 
 
         fisherYates(ors);
 
-        return "(" + ors[0] + "|" + ors[1] + ")";
+        return "(" + ors.join("|") + ")";
     }
 
-    this.regExGenerators = [this.regEx_none, this.regEx_dot, this.regEx_plus, regEx_orRecurse];
+    this.regExGenerators = [this.regEx_none, this.regEx_dot, this.regEx_plus, this.regEx_orRecurse];
 
     this.genRegExSlice = function(result)
     {
@@ -66,7 +60,7 @@ exports.generateRegExFrom = function(word, depth)
         //reg ex slice generator may fail (for example if the depth is too deep)
         while (result.curRegExSlice == 0)
         {
-            var typeOfSlice = Math.floor(Math.random() * this.regExGenerators.length);
+            var typeOfSlice = Math.floor(Math.random() * this.regExGenerators.length * diff);
             result.curRegExSlice = this.regExGenerators[typeOfSlice](result.curSlice, this.depth);
         }
        
