@@ -40,8 +40,8 @@ exports.generateRegExFrom = function(word, depth)
         {
             return 0;
         }
-
-        var ors = [exports.generateRegExFrom(wordPiece), exports.generateRegExFrom(wordPiece)];
+        
+        var ors = [exports.generateRegExFrom(wordPiece, depth+1), exports.generateRegExFrom(wordPiece, depth+1)];
 
         fisherYates(ors);
 
