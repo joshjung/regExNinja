@@ -1,3 +1,5 @@
+require ("fs");
+
 words = ["regular", "expression", "ninja"];
 
 String.prototype.repeat = function( num )
@@ -35,6 +37,11 @@ var generateRegExFrom = function(word, depth)
         return ".".repeat(wordPiece.length);
     }
 
+    this.regEx_plus = function(wordPiece, depth)
+    {
+        return "(" + wordPiece + ")+";
+    }
+
     this.regEx_orRecurse = function(wordPiece, depth)
     {
         if (depth > 0)
@@ -49,7 +56,7 @@ var generateRegExFrom = function(word, depth)
         return "(" + ors[0] + "|" + ors[1] + ")";
     }
 
-    this.regExGenerators = [this.regEx_none, this.regEx_dot, regEx_orRecurse];
+    this.regExGenerators = [this.regEx_none, this.regEx_dot, this.regEx_plus, regEx_orRecurse];
 
     this.genRegExSlice = function(result)
     {
