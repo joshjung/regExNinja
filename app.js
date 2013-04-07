@@ -9,9 +9,7 @@ words = ["regular", "expression", "ninja"];
 var i = Math.floor(Math.random() * words.length);
 var whichWord = words[i];
 
-console.log(whichWord);
-
-var regEx = regexEngine.generateRegExFrom(whichWord, 0);
+var regEx = regexEngine.generateRegExFrom(whichWord, 0.5, 0);
 
 console.log("Original Word: " + whichWord);
 console.log("Regular Expression: " + regEx);

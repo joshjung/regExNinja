@@ -1,5 +1,5 @@
 require ("fs");
-require ("./lib/framework.js");
+framework = require ("./lib/framework.js");
 
 /**
  * Generates a regular expression for a given word.
@@ -8,82 +8,103 @@ require ("./lib/framework.js");
  * @param diff The difficulty (from 0 -  1)
  * @param depth The current depth if a recursion has occurred.
  */
-exports.generateRegExFrom = function(word, diff, depth) 
+exports.RegExGenerator = function(diff) 
 {
-    this.result = {regEx: "", originalWord: word, curWord: word, curSlice: word};
-    this.depth = depth;
+    this.regEx = "";
+    this.diff = diff;
 
-    this.regEx_none = function(wordPiece, diff, depth)
+    if (!this.diff)
+    {
+        console.log("ERROR: diff is " + this.diff);
+    }
+
+    this.regEx_none = function(wordPiece)
     {
         return wordPiece;
     }
 
-    this.regEx_dot = function(wordPiece, diff, depth)
+    this.regEx_dot = function(wordPiece)
     {
         return ".".repeat(wordPiece.length);
     }
 
-    this.regEx_plus = function(wordPiece, diff, depth)
+    this.regEx_plus = function(wordPiece)
     {
+        if (wordPiece.length == 1)
+        {
+            return wordPiece + "+";
+        }
+
         return "(" + wordPiece + ")+";
     }
 
-    this.regEx_orRecurse = function(wordPiece, diff, depth)
+    this.regEx_orRecurse = function(wordPiece)
     {
-        if (depth > 0)
+        if (this.depth > 0)
         {
             return 0;
         }
       
         // From 2 - 5 depending on difficulty 
-        var count = Math.ceil(diff * 4) + 1;
+        var count = Math.ceil(this.diff * 4) + 1;
 
         var ors = [];
        
         for (var i = 0; i < count; i++)
         {
-            ors.push(exports.generateRegExFrom(wordPiece, depth+1));
-        } 
+            ors.push(new exports.RegExGenerator(this.diff)._generate(wordPiece, this.depth+1));
+        }
 
-        fisherYates(ors);
+        framework.fisherYates(ors);
+
+        // Eliminate duplicates
+        ors = ors.filter(function (elem, pos, self) {return self.indexOf(elem) == pos;});
 
         return "(" + ors.join("|") + ")";
     }
 
     this.regExGenerators = [this.regEx_none, this.regEx_dot, this.regEx_plus, this.regEx_orRecurse];
 
-    this.genRegExSlice = function(result)
+    this.genNextRegExSlice = function()
     {
-        result.curRegExSlice = 0;
+        this.curRegExSlice = 0;
 
         //We keep looping until we find a slice that works. In some cases a random
         //reg ex slice generator may fail (for example if the depth is too deep)
-        while (result.curRegExSlice == 0)
+        while (this.curRegExSlice == 0)
         {
-            var typeOfSlice = Math.floor(Math.random() * this.regExGenerators.length * diff);
-            result.curRegExSlice = this.regExGenerators[typeOfSlice](result.curSlice, this.depth);
+            var typeOfSlice = Math.floor(Math.random() * this.regExGenerators.length * this.diff);
+            this.curRegExSlice = this.regExGenerators[typeOfSlice].call(this, this.curSlice);
         }
-       
-        result.regEx += (result.curRegExSlice);
+
+        this.regEx += this.curRegExSlice;
     }
 
-    this.popRandomLettersFrom = function(result)
+    this.popRandomLetters = function()
     {
-        var count = (result.curWord.length > 2) ? Math.floor(Math.random() * (result.curWord.length - 2)) + 1 : result.curWord.length;
+        var count = (this.curWord.length > 2) ? Math.floor(Math.random() * (this.curWord.length - 2)) + 1 : this.curWord.length;
        
-        result.curSlice = result.curWord.substr(0, count);
-        result.curWord = result.curWord.substr(count);       
+        this.curSlice = this.curWord.substr(0, count);
+        this.curWord = this.curWord.substr(count);       
 
-        this.genRegExSlice(result);
-
-        return result;
+        this.genNextRegExSlice();
     }    
 
-    while (this.result.curWord.length)
+    this._generate = function(word, depth)
     {
-        this.result = this.popRandomLettersFrom(this.result);
+        this.curWord = this.originalWord = word;
+        this.depth = depth;
+
+        while (this.curWord.length)
+        {
+            this.popRandomLetters();
+        }
+
+        return this.regEx;
     }
 
-    return this.result.regEx;
+    this.generate = function(word)
+    {
+        return this._generate(word, 0); 
+    }
 }
-
