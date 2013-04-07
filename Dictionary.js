@@ -1,9 +1,25 @@
-var Dictionary = function() {
+var baseWordArray = require('./resources/word_set.json');
+
+// static method
+// arguments:
+exports.baseWordForDifficulty = function(difficulty) {
+  var baseWordIndex = Math.floor(difficulty * (baseWordArray.length - 1));
+  return baseWordArray[baseWordIndex];
+};
+
+// static method
+// arguments:
+//    + difficulty: decimal number in the range of 0.0-1.0
+exports.randomWordForDifficulty = function(difficulty) {
+  var baseWordIndex = Math.floor(Math.random() * difficulty * (baseWordArray.length - 1));
+  return baseWordArray[baseWordIndex];
+};
+
+exports.Dictionary = function() {
 
   // private interface
 
   var XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
-  var baseWordArray = require('./resources/word_set.json');
 
   // public interface
 
@@ -12,14 +28,7 @@ var Dictionary = function() {
       apiBase: 'http://api.wordnik.com/v4',
       apiKey: '94e9a303309616773e91607d12005b116716593c2c73d6a5c'
     },
-
-    // arguments:
-    //    + difficulty: decimal number in the range 0.0-1.0
-    baseWordForDifficulty: function(difficulty) {
-      var baseWordIndex = Math.floor(difficulty * (baseWordArray.length - 1));
-      return baseWordArray[baseWordIndex];
-    },
-
+    
     // arguments:
     //    + object in the format { word: <string>, handler: function(<boolean>) }
     checkValidityOfWord: function(arguments) {
@@ -40,5 +49,3 @@ var Dictionary = function() {
     }
   }
 }
-
-exports.Dictionary = Dictionary;

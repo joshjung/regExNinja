@@ -1,6 +1,6 @@
 var express     = require('express.io'),
     app         = express().http().io(),
-	  regexEngine = require('./regExGen.js'),
+    RegExGenerator = require('./RegExGenerator.js'),
     Dictionary  = require('./Dictionary.js').Dictionary;
 
 // app instance vars
@@ -24,7 +24,7 @@ words = ["regular", "expression", "ninja"];
 var i = Math.floor(Math.random() * words.length);
 var whichWord = words[i];
 
-var regEx = new regexEngine.RegExGenerator(1.0).generate(whichWord);
+var regEx = new RegExGenerator.RegExGenerator(1.0).generate(whichWord);
 
 console.log("Original Word: " + whichWord);
 console.log("Regular Expression: " + regEx);

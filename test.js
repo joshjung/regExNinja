@@ -1,6 +1,5 @@
-regexEngine = require('./regExGen.js');
-
-words = ["regular", "expression", "ninja"];
+RegExGenerator  = require('./RegExGenerator.js');
+Dictionary      = require('./Dictionary.js');
 
 var stdin = process.stdin, stdout = process.stdout;
 var diff = 0;
@@ -15,6 +14,11 @@ var getDifficulty = function (callback)
     stdin.once("data", function(data) 
     {
         diff = parseFloat(data.toString());
+        if (isNaN(diff))
+        {
+            diff = 1.0;
+        }
+
         console.log("Setting difficulty to " + diff);
         callback();
     });
@@ -22,10 +26,9 @@ var getDifficulty = function (callback)
 
 var test = function() 
 {
-    var i = Math.floor(Math.random() * words.length);
-    var whichWord = words[i];
+    var whichWord = Dictionary.randomWordForDifficulty(diff);
 
-    var regEx = new regexEngine.RegExGenerator(diff).generate(whichWord);
+    var regEx = new RegExGenerator.RegExGenerator(diff).generate(whichWord);
 
     console.log("Original Word: " + whichWord);
     console.log("Regular Expression: " + regEx);
