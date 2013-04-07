@@ -9,6 +9,7 @@ var Dictionary = function() {
 
   return {
     wordnikConfiguration: {
+      apiBase: 'http://api.wordnik.com/v4',
       apiKey: '94e9a303309616773e91607d12005b116716593c2c73d6a5c'
     },
 
@@ -23,18 +24,16 @@ var Dictionary = function() {
     //    + object in the format { word: <string>, handler: function(<boolean>) }
     checkValidityOfWord: function(arguments) {
       var verifyWordRequest = new XMLHttpRequest();
-      var apiPath = 'http://api.wordnik.com/word.json/' + arguments.word;
+      var apiPath = this.wordnikConfiguration.apiBase + '/word.json/' + arguments.word;
       var handler = arguments.handler;
 
-      console.log(apiPath);
-
       verifyWordRequest.open('GET', apiPath);
-      verifyWordRequest.setRequestHeader('Content-type', 'application\/json');
+      verifyWordRequest.setRequestHeader('Content-type', 'application\/json; charset=utf-8');
       verifyWordRequest.setRequestHeader('api_key', this.wordnikConfiguration.apiKey);
       
       verifyWordRequest.onload = function() {
         console.log("response: " + this.response);
-        handler(true);
+        handler(true); // should check the actual response object but it's not working so
       };
 
       verifyWordRequest.send();
