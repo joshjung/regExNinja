@@ -49,6 +49,10 @@ app.service('regExNinjaService', function() {
 	this.setupSocket = function() {
 		self.socket = io.connect('http://localhost');
 
+		self.socket.on('connectionAccept', function(data) {
+			self.guid = data.guid;
+		});
+
 		self.socket.on('game', function(data) {
 			self.game = data;
 		});
@@ -79,7 +83,8 @@ app.controller('regExNinjaController', function($scope, regExNinjaService) {
 	this.$scope.loggedIn = false;
 	this.$scope.game = {
 		guid: '',
-		diff: 0
+		diff: 0,
+		state: undefined
 	};
 
 	this.$scope.games = {
@@ -108,6 +113,7 @@ app.controller('regExNinjaController', function($scope, regExNinjaService) {
 		console.log('attempting new game');
 		self.$scope.newGame = false;
 		regExNinjaService.socket.emit('newGame', regExNinjaService.game);
+		regExNinjaService.game.nameProposed = '';
 	}
 })
 

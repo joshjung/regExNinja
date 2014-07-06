@@ -5,7 +5,9 @@ var Game = function() {};
 Game.prototype = {
 	players: [],
 	name: '',
-	owner: undefined
+	owner: undefined,
+	guid: '',
+	state: 'lobby'
 };
 
 var Player = function() {};
@@ -47,8 +49,9 @@ module.exports = function(io) {
 
 	this.addPlayer = function(_player, socket) {
 		var player = new Player();
+
 		player.name = _player.nameProposed;
-		console.log(player);
+
 		this.players.list.push(player);
 		this.players.bySocketId[socket.id] = player;
 		this.players.byName[player.name] = player;
@@ -56,14 +59,20 @@ module.exports = function(io) {
 
 	this.addGame = function(_game, socket) {
 		var game = new Game();
+
 		game.name = _game.nameProposed;
 		game.owner = players.bySocketId[socket.id];
 		game.players = [game.owner];
+		game.guid = guid.raw();
+		game.state = 'lobby';
+
 		this.games.list.push(game);
 		this.games.byName[game.name] = game;
 		this.games.byOwner[game.owner.name] = game;
 
 		console.log(game);
+
+		socket.emit('game', game);
 	};
 
 	/*-----------------------------------------------------
@@ -75,9 +84,8 @@ module.exports = function(io) {
 		sockets.list.push(socket);
 		sockets.byId[socket.id] = socket;
 
-		socket.emit('game', {
-			guid: guid.raw(),
-			diff: 0
+		socket.emit('connectionAccept', {
+			guid: guid.raw()
 		});
 
 		socket.on('join', function(player) {
@@ -92,7 +100,8 @@ module.exports = function(io) {
 			} else {
 				self.log(socket, 'Player accepted: ' + player.nameProposed);
 				socket.emit('joinAccept', {
-					accept: true
+					accept: true,
+					socketId: socket.id
 				});
 				self.addPlayer(player, socket);
 			}
@@ -118,9 +127,11 @@ module.exports = function(io) {
 			socket.emit('games', {
 				list: self.games.list.map(function(game) {
 					return {
-						title: game.name,
+						name: game.name,
 						owner: game.owner,
-						players: game.players.length
+						players: game.players.map(function(player) {
+							return player.name;
+						})
 					};
 				})
 			});
