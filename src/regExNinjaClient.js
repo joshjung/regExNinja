@@ -2,58 +2,75 @@ var app = angular.module('regExNinja', [])
 
 app.service('regExNinjaService', function() {
 	var self = this;
-	var _game = undefined,
-		_player = undefined,
-		_log = [];
 
 	this.control = undefined;
 
+	//--------------------------
+	// pushLog
+	//--------------------------
 	this.pushLog = function(val) {
-		_log.push(_log.length + ':' + val);
+		console.log('log: ', val);
 
-		console.log('log: ', _log);
-
-		if (self.control) {
-			self.control.$scope.serverLog.list = _log
-			self.control.$scope.$apply();
-		}
+		self.control.$scope.serverLog.list.push(val);
+		self.control.$scope.$apply();
 	};
 
+	//--------------------------
+	// game
+	//--------------------------
 	this.__defineSetter__('game', function(val) {
-		_game = val;
-
-		if (self.control) {
-			angular.extend(self.control.$scope.game, val);
-			self.control.$scope.$apply();
-		}
+		angular.extend(self.control.$scope.game, val);
+		self.control.$scope.$apply();
 	});
 
 	this.__defineGetter__('game', function() {
-		return _game;
+		return self.control.$scope.game;
 	});
 
-	this.__defineSetter__('player', function(val) {
-		_player = val;
-	});
-
+	//--------------------------
+	// player
+	//--------------------------
 	this.__defineGetter__('player', function() {
-		return _player;
+		return self.control.$scope.player;
 	});
 
-	this.socket = io.connect('http://localhost');
-
-	this.socket.on('game', function(data) {
-		self.game = data;
-	});
-
-	this.socket.on('log', function(data) {
-		self.pushLog(data);
-	});
-
-	this.socket.on('joinAccept', function(data) {
-		self.control.$scope.loggedIn = true;
+	//--------------------------
+	// games
+	//--------------------------
+	this.__defineSetter__('games', function(val) {
+		angular.extend(self.control.$scope.games, val);
 		self.control.$scope.$apply();
 	});
+
+	this.__defineGetter__('games', function() {
+		return self.control.$scope.games;
+	});
+
+	this.setupSocket = function() {
+		self.socket = io.connect('http://localhost');
+
+		self.socket.on('game', function(data) {
+			self.game = data;
+		});
+
+		self.socket.on('log', function(data) {
+			self.pushLog(data);
+		});
+
+		self.socket.on('joinAccept', function(data) {
+			self.control.$scope.loggedIn = true;
+			self.control.$scope.$apply();
+		});
+
+		self.socket.on('games', function(data) {
+			console.log('games list received', data);
+			self.games = data;
+		});
+	}
+});
+
+app.run(function(regExNinjaService) {
+	regExNinjaService.setupSocket();
 });
 
 app.controller('regExNinjaController', function($scope, regExNinjaService) {
@@ -63,6 +80,10 @@ app.controller('regExNinjaController', function($scope, regExNinjaService) {
 	this.$scope.game = {
 		guid: '',
 		diff: 0
+	};
+
+	this.$scope.games = {
+		list: []
 	};
 
 	regExNinjaService.player = this.$scope.player = {
@@ -77,6 +98,16 @@ app.controller('regExNinjaController', function($scope, regExNinjaService) {
 	this.$scope.startGame = function(event) {
 		console.log('starting as ' + self.$scope.player.nameProposed);
 		regExNinjaService.socket.emit('join', regExNinjaService.player);
+	}
+
+	this.$scope.btnNewGame_clickHandler = function(event) {
+		self.$scope.newGame = true;
+	}
+
+	this.$scope.btnAddNewGame_clickHandler = function(event) {
+		console.log('attempting new game');
+		self.$scope.newGame = false;
+		regExNinjaService.socket.emit('newGame', regExNinjaService.game);
 	}
 })
 

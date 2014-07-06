@@ -6,7 +6,7 @@
       <input ng-model="game.nameProposed" ng-required="true" class="form-control" placeholder="Game name"/>
     </div>
     <span ng-if="game.nameProposed &amp;&amp; game.nameProposed.length &gt; 3">
-        <button ng-click="startGame($event)" class="btn btn-default">Start</button>
+        <button ng-click="btnAddNewGame_clickHandler($event)" class="btn btn-default">Start</button>
     </span>
   </form>
 </div>
