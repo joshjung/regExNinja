@@ -1,0 +1,12 @@
+<div ng-if="!loggedIn">
+    <h1>Join</h1>
+    <form class="form-inline" role="form">
+      <div class="form-group">
+        <label class="sr-only" for="exampleInputEmail1">Express Yourself Regularly</label>
+        <input ng-model="player.nameProposed" ng-required="true" class="form-control" placeholder="Express Yourself Regularly"/>
+      </div>
+      <span ng-if="player.nameProposed &amp;&amp; player.nameProposed.length &gt; 3">
+          <button ng-click="startGame($event)" class="btn btn-default">Join</button>
+      </span>
+    </form>
+</div>

@@ -1,46 +1,55 @@
 <!DOCTYPE html>
+<html lang="en">
     <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <title>RegExNinja</title>
+
+        <link rel="stylesheet" type="text/css" href="/bootstrap/dist/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="/css/regExNinja.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body ng-app="regExNinja">
+        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">RegExNinja</a>
+            </div>
+            <div class="collapse navbar-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="#">New Game</a></li>
+              </ul>
+            </div><!--/.nav-collapse -->
+          </div>
+        </div>
+
+        <div class="container">
+            <div ng-controller="regExNinjaController">
+                <div ng-include="'/view/join.partial.html'"></div>
+                <div ng-include="'/view/newgame.partial.html'"></div>
+                <div ng-include="'/view/debug.partial.html'"></div>
+            </div>
+        </div>
+
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+        <script src="/bootstrap/dist/js/bootstrap.min.js"></script>
         <script src="//cdn.techpines.io/jquery.event.drag-2.0.js"></script>
         <script src="/socket.io/socket.io.js"></script>
-        <script>
-            App = {}
-            App.socket = io.connect()
-
-            // Draw Function
-            App.draw = function(data) {
-                if (data.type == "dragstart") {
-                    App.ctx.beginPath()
-                    App.ctx.moveTo(data.x,data.y)
-                } else if (data.type == "drag") {
-                    App.ctx.lineTo(data.x,data.y)
-                    App.ctx.stroke()
-                } else {
-                    App.ctx.stroke()
-                    App.ctx.closePath()
-                }
-            }
-
-            // Draw from other sockets
-            App.socket.on('draw', App.draw)
-
-            // Bind click and drag events to drawing and sockets.
-            $(function() {
-                App.ctx = $('canvas')[0].getContext("2d")
-                $('canvas').live('drag dragstart dragend', function(e) {
-                    offset = $(this).offset()
-                    data = {
-                        x: (e.clientX - offset.left),
-                        y: (e.clientY - offset.top),
-                        type: e.handleObj.type
-                    }
-                    App.draw(data) // Draw yourself.
-                    App.socket.emit('drawClick', data) // Broadcast draw.
-                })
-            })
-        </script>
-    </head>
-    <body>
-        <canvas width="800px" height="400px" style="margin: 0 auto"></canvas>
+        <script src="/angular/lib/angular.js"></script>
+        <script src="/regExNinjaClient.js"></script>
     </body>
 </html>

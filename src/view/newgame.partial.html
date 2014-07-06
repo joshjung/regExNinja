@@ -1,0 +1,12 @@
+<div ng-if="loggedIn &amp;&amp; newGame">
+  <h1>New Game</h1>
+  <form class="form-inline" role="form">
+    <div class="form-group">
+      <label class="sr-only" for="exampleInputEmail1">Name the Game</label>
+      <input ng-model="game.nameProposed" ng-required="true" class="form-control" placeholder="Game name"/>
+    </div>
+    <span ng-if="game.nameProposed &amp;&amp; game.nameProposed.length &gt; 3">
+        <button ng-click="startGame($event)" class="btn btn-default">Start</button>
+    </span>
+  </form>
+</div>
