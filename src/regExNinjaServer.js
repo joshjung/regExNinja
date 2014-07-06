@@ -7,7 +7,13 @@ Game.prototype = {
 	name: '',
 	owner: undefined,
 	guid: '',
-	state: 'lobby'
+	state: 'lobby',
+	updateSockets: function() {
+		for (var i = 0; i < players.length; i++) {
+			var player = players[i];
+			player.socket.emit('game', this);
+		}
+	}
 };
 
 var Player = function() {};
@@ -25,7 +31,8 @@ module.exports = function(io) {
 
 	this.sockets = {
 		list: [],
-		byId: {}
+		byId: {},
+		byPlayerName: {}
 	};
 
 	this.io = io;
@@ -33,7 +40,9 @@ module.exports = function(io) {
 	this.games = {
 		list: [],
 		byOwner: {},
-		byName: {}
+		byName: {},
+		byGuid: {},
+		bySocketId: {}
 	};
 
 	this.players = {
@@ -52,6 +61,8 @@ module.exports = function(io) {
 
 		player.name = _player.nameProposed;
 
+		this.sockets.byPlayerName[player.name] = socket;
+
 		this.players.list.push(player);
 		this.players.bySocketId[socket.id] = player;
 		this.players.byName[player.name] = player;
@@ -69,11 +80,43 @@ module.exports = function(io) {
 		this.games.list.push(game);
 		this.games.byName[game.name] = game;
 		this.games.byOwner[game.owner.name] = game;
+		this.games.byGuid[game.guid] = game;
+		this.games.bySocketId[socket.id] = game;
 
-		console.log(game);
-
-		socket.emit('game', game);
+		game.updateSockets();
+		self.updateSockets();
 	};
+
+	this.joinGame = function(player, game) {
+		game.players.push(player);
+		games.bySocketId[this.sockets.byPlayerName[player.name].id] = game;
+		game.updateSockets();
+		self.updateSockets();
+	};
+
+	this.destroyGame = function(game) {
+		self.games.list.splice(this.games.list.indexOf(game), 1);
+		delete this.games.byGuid[game.guid];
+		self.updateSockets();
+	}
+
+	this.playerDisconnect = function(socket) {
+		self.sockets.list.splice(self.sockets.list.indexOf(socket), 1);
+		var player = self.players.bySocketId[socket.id];
+		var game = games.bySocketId[socket.id];
+		if (game) {
+			game.players.splice(game.players.indexOf(player), 1);
+
+			if (game.players.length == 0) {
+				self.destroyGame(game);
+			}
+
+			game.owner = game.players[0];
+
+			game.updateSockets();
+			self.updateSockets();
+		}
+	}
 
 	/*-----------------------------------------------------
    Socket IO
@@ -109,12 +152,21 @@ module.exports = function(io) {
 
 		socket.on('disconnect', function() {
 			self.log(socket, 'Disconnection: ' + socket.id, socket);
-			self.sockets.list.splice(self.sockets.list.indexOf(socket), 1);
+
+			self.playerDisconnect(socket);
 		});
 
 		socket.on('newGame', function(game) {
 			self.log(socket, 'New Game Requested: ' + game.nameProposed, socket);
 			self.addGame(game, socket);
+		});
+
+		socket.on('joinGame', function(gameGuid) {
+			var player = self.players.bySocketId[socket.id];
+			var game = self.games.byGuid[gameGuid];
+			self.log(socket, 'Player ' + player.name + ' attempting to join ' + game.name);
+
+			self.joinGame(player, game);
 		});
 	});
 
@@ -129,6 +181,7 @@ module.exports = function(io) {
 					return {
 						name: game.name,
 						owner: game.owner,
+						guid: game.guid,
 						players: game.players.map(function(player) {
 							return player.name;
 						})
@@ -138,5 +191,6 @@ module.exports = function(io) {
 		}
 	}
 
+	this.updateSockets();
 	setInterval(this.updateSockets, 5000);
 }

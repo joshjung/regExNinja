@@ -51,6 +51,9 @@ app.service('regExNinjaService', function() {
 
 		self.socket.on('connectionAccept', function(data) {
 			self.guid = data.guid;
+			if (self.control) {
+				self.control.reset(true);
+			}
 		});
 
 		self.socket.on('game', function(data) {
@@ -63,6 +66,7 @@ app.service('regExNinjaService', function() {
 
 		self.socket.on('joinAccept', function(data) {
 			self.control.$scope.loggedIn = true;
+			self.player.name = self.player.nameProposed;
 			self.control.$scope.$apply();
 		});
 
@@ -80,25 +84,34 @@ app.run(function(regExNinjaService) {
 app.controller('regExNinjaController', function($scope, regExNinjaService) {
 	var self = regExNinjaService.control = this;
 	this.$scope = $scope;
-	this.$scope.loggedIn = false;
-	this.$scope.game = {
-		guid: '',
-		diff: 0,
-		state: undefined
-	};
 
-	this.$scope.games = {
-		list: []
-	};
+	this.reset = function(apply) {
+		this.$scope.loggedIn = false;
+		this.$scope.game = {
+			guid: '',
+			diff: 0,
+			state: undefined
+		};
 
-	regExNinjaService.player = this.$scope.player = {
-		name: undefined,
-		nameProposed: ''
+		this.$scope.games = {
+			list: []
+		};
+
+		regExNinjaService.player = this.$scope.player = {
+			name: undefined,
+			nameProposed: ''
+		}
+
+		this.$scope.serverLog = {
+			list: []
+		};
+
+		if (apply) {
+			this.$scope.$apply();
+		}
 	}
 
-	this.$scope.serverLog = {
-		list: []
-	};
+	this.reset(false);
 
 	this.$scope.startGame = function(event) {
 		console.log('starting as ' + self.$scope.player.nameProposed);
@@ -114,6 +127,15 @@ app.controller('regExNinjaController', function($scope, regExNinjaService) {
 		self.$scope.newGame = false;
 		regExNinjaService.socket.emit('newGame', regExNinjaService.game);
 		regExNinjaService.game.nameProposed = '';
+	}
+
+	this.$scope.btnJoinGame_clickHandler = function(event) {
+		console.log('joining ' + event.currentTarget.id);
+		regExNinjaService.socket.emit('joinGame', event.currentTarget.id);
+	}
+
+	this.$scope.btnGameList_clickHandler = function(event) {
+		self.$scope.newGame = false;
 	}
 })
 

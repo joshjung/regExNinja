@@ -9,11 +9,14 @@ var RegExGenerator = require('regexgenerator');
 var Dictionary = require('./src/dictionary.js').Dictionary;
 var players = [];
 var game = new require('./src/regExNinjaServer')(io);
+var port = 8080;
 
 /*-----------------------------------------------------
   Server Startup
 -----------------------------------------------------*/
 server.listen(8080);
+
+console.log("Server started on http://localhost:" + 8080);
 
 /*-----------------------------------------------------
   Exposed Directories
