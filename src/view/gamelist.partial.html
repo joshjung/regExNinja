@@ -1,4 +1,4 @@
-<div ng-if="loggedIn &amp;&amp; !newGame &amp;&amp; game.state === undefined">
+<div ng-if="loggedIn() &amp;&amp; !newGame &amp;&amp; game.state === undefined">
   <h1>Games List</h1>
     
     <div ng-repeat="game in games.list">

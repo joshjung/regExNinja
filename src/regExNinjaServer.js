@@ -8,10 +8,12 @@ Game.prototype = {
 	owner: undefined,
 	guid: '',
 	state: 'lobby',
-	updateSockets: function() {
-		for (var i = 0; i < players.length; i++) {
-			var player = players[i];
-			player.socket.emit('game', this);
+	updateSockets: function(server) {
+		for (var i = 0; i < this.players.length; i++) {
+			var player = this.players[i];
+			var socket = server.sockets.byPlayerName[player.name];
+			console.log('game updateSockets for ' + player.name + " on " + socket.id);
+			socket.emit('game', this);
 		}
 	}
 };
@@ -52,7 +54,6 @@ module.exports = function(io) {
 	};
 
 	this.log = function(socket, val) {
-		console.log(val);
 		socket.emit('log', val);
 	};
 
@@ -83,14 +84,14 @@ module.exports = function(io) {
 		this.games.byGuid[game.guid] = game;
 		this.games.bySocketId[socket.id] = game;
 
-		game.updateSockets();
+		game.updateSockets(self);
 		self.updateSockets();
 	};
 
 	this.joinGame = function(player, game) {
 		game.players.push(player);
 		games.bySocketId[this.sockets.byPlayerName[player.name].id] = game;
-		game.updateSockets();
+		game.updateSockets(self);
 		self.updateSockets();
 	};
 
@@ -113,7 +114,7 @@ module.exports = function(io) {
 
 			game.owner = game.players[0];
 
-			game.updateSockets();
+			game.updateSockets(self);
 			self.updateSockets();
 		}
 	}

@@ -1,7 +1,10 @@
-<div ng-if="loggedIn &amp;&amp; game.state == 'lobby'">
+<div ng-if="loggedIn() &amp;&amp; game.state == 'lobby'">
     <h1>{{game.name}}</h1>
     <h2>Players</h2>
     <div ng-repeat="player in game.players">
       {{player.name}}
+    </div>
+    <div ng-if="game.owner.name == player.name">
+      <button class="btn">Start Game!</button>
     </div>
 </div>

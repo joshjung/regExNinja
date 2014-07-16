@@ -50,24 +50,18 @@ app.service('regExNinjaService', function() {
 		self.socket = io.connect('http://localhost');
 
 		self.socket.on('connectionAccept', function(data) {
+			console.log('Connection made', data);
+
 			self.guid = data.guid;
-			if (self.control) {
-				self.control.reset(true);
-			}
 		});
 
 		self.socket.on('game', function(data) {
 			self.game = data;
+			console.log('game received', data);
 		});
 
 		self.socket.on('log', function(data) {
 			self.pushLog(data);
-		});
-
-		self.socket.on('joinAccept', function(data) {
-			self.control.$scope.loggedIn = true;
-			self.player.name = self.player.nameProposed;
-			self.control.$scope.$apply();
 		});
 
 		self.socket.on('games', function(data) {
@@ -77,16 +71,32 @@ app.service('regExNinjaService', function() {
 	}
 });
 
-app.run(function(regExNinjaService) {
-	regExNinjaService.setupSocket();
+app.run(function(regExNinjaService, $http) {
+	console.log('run');
+
+	$http({
+		method: 'GET',
+		url: '/session'
+	}).success(function(data, status, headers, config) {
+		console.log('/session:', data);
+		regExNinjaService.player.name = data.playerName;
+
+		regExNinjaService.setupSocket();
+	}).error(function(data, status, headers, config) {
+		console.log('error', data);
+	});
 });
 
-app.controller('regExNinjaController', function($scope, regExNinjaService) {
+app.controller('regExNinjaController', function($scope, $http, regExNinjaService) {
+	var service = regExNinjaService;
 	var self = regExNinjaService.control = this;
 	this.$scope = $scope;
 
 	this.reset = function(apply) {
-		this.$scope.loggedIn = false;
+		this.$scope.loggedIn = function() {
+			return self.$scope.player && self.$scope.player.name !== undefined;
+		};
+
 		this.$scope.game = {
 			guid: '',
 			diff: 0,
@@ -115,7 +125,21 @@ app.controller('regExNinjaController', function($scope, regExNinjaService) {
 
 	this.$scope.startGame = function(event) {
 		console.log('starting as ' + self.$scope.player.nameProposed);
-		regExNinjaService.socket.emit('join', regExNinjaService.player);
+		$http({
+			method: 'GET',
+			url: '/login/' + self.$scope.player.nameProposed
+		}).success(function(data, status, headers, config) {
+			var player = data.player;
+			service.player.name = player.name;
+
+			if (service.socket) {
+				service.socket.socket.reconnect();
+			} else {
+				service.setupSocket();
+			}
+		}).error(function(data, status, headers, config) {
+			console.log('error', data);
+		});
 	}
 
 	this.$scope.btnNewGame_clickHandler = function(event) {
