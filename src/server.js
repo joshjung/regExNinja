@@ -13,10 +13,6 @@ var guid = require('guid'),
 var Server = function(io) {
 	debug('Server()');
 
-	var self = this;
-
-	this.io = io;
-
 	this.sockets = new Hash(['id', ['player', 'name']]);
 	this.games = new Hash([
 		['owner', 'name'], 'name', 'guid', ['owner', 'socket', 'id']
@@ -24,17 +20,19 @@ var Server = function(io) {
 	this.players = new Hash([
 		['socket', 'id'], 'name'
 	]);
-
-	io.on('connection', socket_connectionHandler);
-
-	this.updateSockets();
-	setInterval(this.updateSockets, 5000);
 };
 
 Server.prototype = {
 	//---------------------
 	// methods
 	//---------------------
+	start: function(io) {
+		debug('Starting RegExNinja socket server');
+		this.io = io;
+		this.io.on('connection', this.socket_connectionHandler);
+		setInterval(this.updateSockets.bind(this), 5000);
+		this.updateSockets();
+	},
 	log: function(socket, val) {
 		debug('socket: ' + socket.id, val);
 		socket.emit('log', val);
@@ -68,7 +66,7 @@ Server.prototype = {
 		this.games.remove(game);
 
 		self.updateSockets();
-	}
+	},
 	//---------------------
 	// events
 	//---------------------
@@ -137,20 +135,20 @@ Server.prototype = {
 		});
 	},
 	updateSockets: function() {
+		debug('updating all sockets with game list');
 		var games = {
-			list: this.games.list.map(function(game) {
+			list: this.games.all.map(function(game) {
 				return game.serialize();
 			})
 		};
 
-		for (var i = 0; i < self.sockets.all.length; i++) {
+		for (var i = 0; i < this.sockets.all.length; i++) {
 			self.sockets.all[i].emit('games', games);
 		}
 	}
-}
+};
+
 /*-----------------------------------------------*\
  * exports
 \*-----------------------------------------------*/
-module.exports =
-
 module.exports = Server;

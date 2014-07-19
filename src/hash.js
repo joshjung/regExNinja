@@ -7,7 +7,7 @@ var Hash = function(keys) {
 
 	this.keyFields = keys;
 
-	__definegetter__('all', function() {
+	this.__defineGetter__('all', function() {
 		return list;
 	});
 };
