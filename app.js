@@ -15,7 +15,7 @@ var http = require('http'),
 	connect = require('connect'),
 	express = require('express'),
 	app = express(),
-	routes = require('./src/routes')(app),
+	routes = require('./src/routes')(app, express),
 	cookieParser = express.cookieParser('very secret cookie string'),
 	sessionStore = new express.session.MemoryStore(),
 	server = require('http').Server(app),
@@ -35,10 +35,7 @@ app.configure(function() {
 			httpOnly: true
 		},
 		key: SID_KEY
-	}))
-
-	app.use(express.static('src'));
-	app.use(express.static('node_modules'));
+	}));
 });
 
 server.listen(PORT);

@@ -2,7 +2,10 @@
   Routes
 -----------------------------------------------------*/
 
-module.exports = function(app) {
+module.exports = function(app, express) {
+	app.use(express.static('public'));
+	app.use(express.static('node_modules'));
+
 	app.get('/', function(req, res) {
 		res.sendfile(__dirname + '/index.html');
 	});
@@ -23,9 +26,13 @@ module.exports = function(app) {
 		console.log('/session requested');
 		console.log(req.session);
 
-		res.send(200, {
-			playerName: req.session.playerName
-		});
+		if (req.session) {
+			res.send(200, {
+				playerName: req.session.playerName
+			});
+		} else {
+			res.send(200, 'fail');
+		}
 	});
 
 	app.get('/logout', function(req, res) {
