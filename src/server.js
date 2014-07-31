@@ -18,7 +18,7 @@ var Server = function(io) {
 		['owner', 'name'], 'name', 'guid', ['owner', 'socket', 'id']
 	]);
 	this.players = new Hash([
-		['socket', 'id'], 'name'
+		['socket', 'id'], 'name', 'guid'
 	]);
 };
 
@@ -38,15 +38,22 @@ Server.prototype = {
 		socket.emit('log', val);
 	},
 	newPlayerForSocket: function(playerProposed, socket) {
-		var player = new Player(playerProposed.nameProposed, socket);
+		if (this.players.has(playerProposed.guid)) {
+			debug('player already exists for guid' + playerProposed.guid);
+			return;
+		}
+		var player = new Player(playerProposed.nameProposed, socket, playerProposed.guid);
 		this.players.add(player);
-		this.sockets.addMap(player.name, socket);
 	},
 	newGame: function(proposedGame, socket) {
 		debug('newGame: ' + socket.id);
 		debug('newGame: ', this.players);
 
-		this.games.add(new Game(this, this.players.get(socket.id), proposedGame.nameProposed));
+		var game = new Game(this, this.players.get(socket.id), proposedGame.nameProposed);
+
+		this.games.add(game);
+
+		game.start();
 
 		this.updateSockets();
 	},
@@ -96,12 +103,19 @@ Server.prototype = {
 		});
 
 		socket.on('join', function(player) {
-			self.log(socket, 'Player accepted: ' + player.nameProposed);
+			if (player.nameProposed) {
+				self.log(socket, 'New player accepted: ' + player.nameProposed);
+			} else {
+				self.log(socket, 'Player rejoined: ' + player.name);
+			}
 			socket.emit('joinAccept', {
 				accept: true,
 				socketId: socket.id
 			});
-			self.newPlayerForSocket(player, socket);
+
+			if (player.nameProposed) {
+				self.newPlayerForSocket(player, socket);
+			}
 		});
 
 		socket.on('disconnect', function() {

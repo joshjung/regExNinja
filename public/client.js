@@ -21,6 +21,8 @@ app.service('regExNinjaService', function() {
 	this.__defineSetter__('game', function(val) {
 		angular.extend(self.control.$scope.game, val);
 		self.control.$scope.$apply();
+
+		console.log('scope game is', self.control.$scope.game);
 	});
 
 	this.__defineGetter__('game', function() {
@@ -50,9 +52,11 @@ app.service('regExNinjaService', function() {
 		self.socket = io.connect('http://localhost');
 
 		self.socket.on('connectionAccept', function(data) {
-			console.log('Connection made', data);
+			console.log('connectionAccept', data);
 
 			self.guid = data.guid;
+
+			console.log('joining socket as player', self.player);
 
 			self.socket.emit('join', self.player);
 		});
@@ -81,7 +85,8 @@ app.run(function(regExNinjaService, $http) {
 		url: '/session'
 	}).success(function(data, status, headers, config) {
 		console.log('/session:', data);
-		regExNinjaService.player.name = data.playerName;
+		regExNinjaService.player.name = data.name;
+		regExNinjaService.player.guid = data.guid;
 
 		regExNinjaService.setupSocket();
 	}).error(function(data, status, headers, config) {
@@ -111,6 +116,7 @@ app.controller('regExNinjaController', function($scope, $http, regExNinjaService
 
 		regExNinjaService.player = this.$scope.player = {
 			name: undefined,
+			guid: '',
 			nameProposed: ''
 		}
 
@@ -126,13 +132,14 @@ app.controller('regExNinjaController', function($scope, $http, regExNinjaService
 	this.reset(false);
 
 	this.$scope.startGame = function(event) {
-		console.log('starting as ' + self.$scope.player.nameProposed);
+		console.log('Login as ' + self.$scope.player.nameProposed);
 		$http({
 			method: 'GET',
 			url: '/login/' + self.$scope.player.nameProposed
 		}).success(function(data, status, headers, config) {
 			var player = data.player;
 			service.player.name = player.name;
+			service.player.guid = player.guid;
 
 			if (service.socket) {
 				service.socket.socket.reconnect();

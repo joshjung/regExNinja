@@ -2,7 +2,13 @@
   <h1>Games List</h1>
     
     <div ng-repeat="game in games.list">
-      <h4><a ng-click="btnJoinGame_clickHandler($event)" id="{{game.guid}}">{{game.name}}</a>: <small ng-repeat="player in game.players">{{player}}<span ng-if="$index != game.players.length-1">, </span></small></h4>
-      
+      <h4>
+        <a ng-click="btnJoinGame_clickHandler($event)" id="{{game.guid}}">
+          {{game.name}}
+        </a>:
+        <small ng-repeat="player in game.players">
+          {{player}}<span ng-if="$index != game.players.length-1">, </span>
+        </small>
+      </h4>
     </div>
 </div>

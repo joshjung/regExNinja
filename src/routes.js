@@ -7,7 +7,8 @@ var SID_KEY = 'session.sid';
   modules
 -----------------------------------------------------*/
 var debug = require('debug')('routes'),
-	io = require('socket.io');
+	io = require('socket.io'),
+	guid = require('guid');
 
 /*-----------------------------------------------------
   Routes
@@ -35,7 +36,7 @@ module.exports = function(app, express, server) {
 				(data.signedCookies && data.signedCookies[SID_KEY]) ||
 				(data.cookies && data.cookies[SID_KEY]);
 
-			console.log('Loading session from sessionStore: ' + sidCookie);
+			console.log('Loading session from sessionStore for sid: ' + sidCookie);
 
 			sessionStore.load(sidCookie, function(err, session) {
 				if (err || !session || session.isLogged !== true) {
@@ -70,15 +71,19 @@ module.exports = function(app, express, server) {
 
 	app.get('/login/:id', function(req, res) {
 		debug('login');
-		debug('session: ' + JSON.stringify(req.session, null, 4));
 
 		req.session.playerName = req.params.id;
 		req.session.isLogged = true;
+
 		res.send(200, JSON.stringify({
 			player: {
-				name: req.session.playerName
+				name: req.session.playerName,
+				guid: guid.raw()
 			}
 		}));
+
+		debug('session: ' + JSON.stringify(req.session, null, 4));
+
 		debug('player ' + req.session.playerName + ' logging in');
 	});
 
@@ -88,7 +93,8 @@ module.exports = function(app, express, server) {
 
 		if (req.session) {
 			res.send(200, {
-				playerName: req.session.playerName
+				name: req.session.playerName,
+				guid: guid.raw()
 			});
 		} else {
 			res.send(200, 'fail');

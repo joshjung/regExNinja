@@ -25,20 +25,21 @@ Game.prototype = {
 	name: '',
 	owner: undefined,
 	guid: '',
-	state: 'lobby',
+	state: 'none',
 	server: undefined,
 	//---------------------
 	// methods
 	//---------------------
 	start: function() {
+		this.state = 'lobby';
 		this.updateSockets();
 	},
 	updateSockets: function() {
 		for (var i = 0; i < this.players.length; i++) {
-			var player = this.players[i];
-			var socket = this.server.sockets.byPlayerName[player.name];
+			var player = this.players[i],
+				socket = player.socket;
 			debug('game updateSockets for ' + player.name + " on " + socket.id);
-			socket.emit('game', this);
+			socket.emit('game', this.serialize());
 		}
 	},
 	addPlayer: function(player) {
@@ -63,6 +64,7 @@ Game.prototype = {
 			name: this.name,
 			ownerName: this.owner.name,
 			guid: this.guid,
+			state: this.state,
 			players: this.players.map(function(player) {
 				return player.name;
 			})
