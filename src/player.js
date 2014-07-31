@@ -1,7 +1,10 @@
 /*-----------------------------------------------*\
  * Player
 \*-----------------------------------------------*/
-var Player = function() {};
+var Player = function(name, socket) {
+	this.name = name;
+	this.socket = socket;
+};
 
 Player.prototype = {
 	name: '',

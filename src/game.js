@@ -8,14 +8,13 @@ var debug = require('debug')('game');
  * Game
 \*-----------------------------------------------*/
 var Game = function(server, owner, name) {
+	debug('NEW GAME CONSTRUCTOR: ' + owner + ' ' + name);
 	this.server = server;
 	this.name = name;
 	this.owner = owner;
-	this.players = [game.owner];
+	this.players = [this.owner];
 	this.guid = guid.raw();
 	this.state = 'lobby';
-
-	updateSockets();
 };
 
 Game.prototype = {
@@ -31,6 +30,9 @@ Game.prototype = {
 	//---------------------
 	// methods
 	//---------------------
+	start: function() {
+		this.updateSockets();
+	},
 	updateSockets: function() {
 		for (var i = 0; i < this.players.length; i++) {
 			var player = this.players[i];
@@ -40,6 +42,9 @@ Game.prototype = {
 		}
 	},
 	addPlayer: function(player) {
+		if (!player) {
+			throw Error('oops player isn\'t defined');
+		}
 		this.players.push(player);
 		this.updateSockets();
 	},
@@ -56,7 +61,7 @@ Game.prototype = {
 	serialize: function() {
 		return {
 			name: this.name,
-			owner: this.owner,
+			ownerName: this.owner.name,
 			guid: this.guid,
 			players: this.players.map(function(player) {
 				return player.name;

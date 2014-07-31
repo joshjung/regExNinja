@@ -53,6 +53,8 @@ app.service('regExNinjaService', function() {
 			console.log('Connection made', data);
 
 			self.guid = data.guid;
+
+			self.socket.emit('join', self.player);
 		});
 
 		self.socket.on('game', function(data) {

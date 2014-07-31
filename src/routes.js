@@ -1,8 +1,66 @@
 /*-----------------------------------------------------
+  constants
+-----------------------------------------------------*/
+var SID_KEY = 'session.sid';
+
+/*-----------------------------------------------------
+  modules
+-----------------------------------------------------*/
+var debug = require('debug')('routes'),
+	io = require('socket.io');
+
+/*-----------------------------------------------------
   Routes
 -----------------------------------------------------*/
+module.exports = function(app, express, server) {
+	var cookieParser = express.cookieParser('very secret cookie string'),
+		sessionStore = new express.session.MemoryStore();
 
-module.exports = function(app, express) {
+	this.io = io.listen(server);
+	this.io.set('authorization', function(data, callback) {
+		debug('setting up authorization cookieParser');
+
+		if (!data.headers.cookie) {
+			return callback('socket.io: No cookie transmitted.', false);
+		}
+
+		cookieParser(data, {}, function(parseErr) {
+			debug('parsing cookie');
+
+			if (parseErr) {
+				return callback('Error parsing cookies.', false);
+			}
+
+			var sidCookie = (data.secureCookies && data.secureCookies[SID_KEY]) ||
+				(data.signedCookies && data.signedCookies[SID_KEY]) ||
+				(data.cookies && data.cookies[SID_KEY]);
+
+			console.log('Loading session from sessionStore: ' + sidCookie);
+
+			sessionStore.load(sidCookie, function(err, session) {
+				if (err || !session || session.isLogged !== true) {
+					return callback('not logged in!');
+				} else {
+					console.log('Session Loaded.');
+
+					data.session = session;
+
+					callback(null, true);
+				}
+			});
+		});
+	});
+
+	app.configure(function() {
+		debug('express app configuring');
+
+		app.use(cookieParser);
+		app.use(express.session({
+			store: sessionStore,
+			key: SID_KEY
+		}));
+	});
+
 	app.use(express.static('public'));
 	app.use(express.static('node_modules'));
 
@@ -11,20 +69,22 @@ module.exports = function(app, express) {
 	});
 
 	app.get('/login/:id', function(req, res) {
+		debug('login');
+		debug('session: ' + JSON.stringify(req.session, null, 4));
+
 		req.session.playerName = req.params.id;
 		req.session.isLogged = true;
-		console.log(req);
 		res.send(200, JSON.stringify({
 			player: {
 				name: req.session.playerName
 			}
 		}));
-		console.log('player ' + req.session.playerName + ' logging in');
+		debug('player ' + req.session.playerName + ' logging in');
 	});
 
 	app.get('/session', function(req, res) {
-		console.log('/session requested');
-		console.log(req.session);
+		debug('/session requested');
+		debug(req.session);
 
 		if (req.session) {
 			res.send(200, {
@@ -41,11 +101,11 @@ module.exports = function(app, express) {
 		res.send(200, JSON.stringify({
 			logout: true
 		}));
-		console.log('player logging out');
+		debug('player logging out');
 	});
 
 	app.use(function(req, res, next) {
-		console.log(req.originalUrl);
+		debug(req.originalUrl);
 		res.send(404, 'Sorry can\'t find that!');
 	});
-}
+};

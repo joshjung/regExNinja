@@ -13,7 +13,7 @@ var guid = require('guid'),
 var Server = function(io) {
 	debug('Server()');
 
-	this.sockets = new Hash(['id', ['player', 'name']]);
+	this.sockets = new Hash(['id']);
 	this.games = new Hash([
 		['owner', 'name'], 'name', 'guid', ['owner', 'socket', 'id']
 	]);
@@ -29,7 +29,7 @@ Server.prototype = {
 	start: function(io) {
 		debug('Starting RegExNinja socket server');
 		this.io = io;
-		this.io.on('connection', this.socket_connectionHandler);
+		this.io.on('connection', this.socket_connectionHandler.bind(this));
 		setInterval(this.updateSockets.bind(this), 5000);
 		this.updateSockets();
 	},
@@ -38,18 +38,15 @@ Server.prototype = {
 		socket.emit('log', val);
 	},
 	newPlayerForSocket: function(playerProposed, socket) {
-		var player = new Player();
-
-		player.name = playerProposed.nameProposed;
-
-		this.sockets.byPlayerName[player.name] = socket;
-
-		this.players.list.push(player);
-		this.players.bySocketId[socket.id] = player;
-		this.players.byName[player.name] = player;
+		var player = new Player(playerProposed.nameProposed, socket);
+		this.players.add(player);
+		this.sockets.addMap(player.name, socket);
 	},
 	newGame: function(proposedGame, socket) {
-		games.add(new Game(this, players.get(socket.id), proposedGame.nameProposed));
+		debug('newGame: ' + socket.id);
+		debug('newGame: ', this.players);
+
+		this.games.add(new Game(this, this.players.get(socket.id), proposedGame.nameProposed));
 
 		this.updateSockets();
 	},
@@ -65,7 +62,7 @@ Server.prototype = {
 
 		this.games.remove(game);
 
-		self.updateSockets();
+		this.updateSockets();
 	},
 	//---------------------
 	// events
@@ -82,39 +79,29 @@ Server.prototype = {
 			game.removePlayer(player);
 
 			if (game.players.length == 0) {
-				self.destroyGame(game);
+				this.destroyGame(game);
 			}
 
-			self.updateSockets();
+			this.updateSockets();
 		}
 	},
 	socket_connectionHandler: function(socket) {
-		self.log(socket, 'New Connection ' + socket.id);
+		var self = this;
+		this.log(socket, 'New Connection ' + socket.id);
 
-		sockets.list.push(socket);
-		sockets.byId[socket.id] = socket;
+		this.sockets.add(socket);
 
 		socket.emit('connectionAccept', {
 			guid: guid.raw()
 		});
 
 		socket.on('join', function(player) {
-			self.log(socket, 'Player attempt log in: ' + player.nameProposed);
-
-			if (self.players.hasOwnProperty(player.nameProposed)) {
-				self.log(socket, 'Player declined: ' + player.nameProposed);
-				socket.emit('joinDecline', {
-					accept: false,
-					reason: 'Name already taken'
-				});
-			} else {
-				self.log(socket, 'Player accepted: ' + player.nameProposed);
-				socket.emit('joinAccept', {
-					accept: true,
-					socketId: socket.id
-				});
-				self.newPlayerForSocket(player, socket);
-			}
+			self.log(socket, 'Player accepted: ' + player.nameProposed);
+			socket.emit('joinAccept', {
+				accept: true,
+				socketId: socket.id
+			});
+			self.newPlayerForSocket(player, socket);
 		});
 
 		socket.on('disconnect', function() {
@@ -143,7 +130,7 @@ Server.prototype = {
 		};
 
 		for (var i = 0; i < this.sockets.all.length; i++) {
-			self.sockets.all[i].emit('games', games);
+			this.sockets.all[i].emit('games', games);
 		}
 	}
 };

@@ -1,34 +1,40 @@
+var debug = require('debug')('hash');
 /*-----------------------------------------------*\
  * hash
 \*-----------------------------------------------*/
 var Hash = function(keys) {
-	var map = {},
-		list = [];
+	this.map = {};
+	this.list = [];
 
 	this.keyFields = keys;
 
 	this.__defineGetter__('all', function() {
-		return list;
+		return this.list;
 	});
 };
 
 Hash.prototype = {
 	add: function(obj) {
+		debug('adding: ' + obj);
 		for (var key in this.keyFields) {
+			key = this.keyFields[key];
+			debug('key: ' + key);
 			var inst = this.find(obj, key);
 			if (inst) {
-				if (map[inst]) {
+				if (this.map[inst]) {
 					throw Error('Hash key ' + obj[key] + ' already exists');
 				}
 
-				map[inst] = obj;
+				debug('mapping ' + inst + ' -> ' + obj);
+
+				this.map[inst] = obj;
 			}
 		}
 
-		list.push(obj);
+		this.list.push(obj);
 	},
 	addMap: function(key, obj) {
-		map[key] = obj;
+		this.map[key] = obj;
 	},
 	get: function(key) {
 		return this.map[key];
@@ -44,7 +50,7 @@ Hash.prototype = {
 			}
 		}
 
-		list.splice(list.indexOf(obj), 1);
+		this.list.splice(this.list.indexOf(obj), 1);
 	},
 	find: function(obj, path) {
 		if (typeof path === 'string') {
@@ -52,7 +58,7 @@ Hash.prototype = {
 		}
 
 		// else assume array.
-		while (path.length) {
+		while (path.length && obj) {
 			obj = obj[path.shift()];
 		}
 
